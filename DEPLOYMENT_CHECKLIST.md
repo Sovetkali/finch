@@ -12,6 +12,7 @@
 - Install the Python dependencies.
 - Create and activate the virtual environment.
 - Run database migrations.
+- Compile translation files with `python manage.py compilemessages`.
 - Collect static files into `staticfiles/`.
 - Verify the health check at `/health/`.
 
