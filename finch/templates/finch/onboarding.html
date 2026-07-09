@@ -1,0 +1,76 @@
+{% extends 'finch/base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Welcome" %} - {% trans "Finch" %}{% endblock %}
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  .onboarding-card {
+    background: var(--surface-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    color: var(--text-color);
+    padding: clamp(1.25rem, 4vw, 2rem);
+    width: 100%;
+  }
+  .onboarding-card h2 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.12;
+  }
+  .onboarding-card p {
+    font-size: 1.1rem;
+  }
+  .invite-input {
+    font-family: monospace;
+    border-radius: .4rem;
+    border: 1px solid var(--border-color);
+    padding: .5rem 1rem;
+    width: 100%;
+    margin-bottom: .5rem;
+  }
+  .btn-copy {
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: .4rem;
+    padding: .5rem 1rem;
+    transition: transform .2s ease, background .2s ease;
+    width: 100%;
+  }
+  .btn-copy:hover {
+    background: #218838;
+    transform: scale(1.03);
+  }
+  .btn-start {
+    background: #0d6efd;
+    color: #fff;
+    border: none;
+    border-radius: .4rem;
+    padding: .6rem 1.2rem;
+    margin-top: 1rem;
+    transition: background .2s ease;
+  }
+  .btn-start:hover {background:#0b5ed7;}
+</style>
+{% endblock %}
+{% block content %}
+<div class="onboarding-card text-center">
+  <h2 class="mb-3">{% trans "Welcome to Finch!" %} 🎉</h2>
+  <p class="mb-4">{% trans "Share your link with friends so they can subscribe to your content." %}</p>
+  <input id="invite-url" class="invite-input" type="text" readonly value="{{ invite_url }}" />
+  <button class="btn-copy" onclick="copyLink()">{% trans "Copy link" %}</button>
+  <div>
+    <a href="{% url 'index' %}" class="btn-start mt-3 d-inline-block">{% trans "Go to feed" %}</a>
+  </div>
+</div>
+<script>
+  function copyLink() {
+    const el = document.getElementById('invite-url');
+    el.select();
+    el.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(el.value).then(() => {
+      alert('{% trans "Link copied to clipboard" %}');
+    });
+  }
+</script>
+{% endblock %}

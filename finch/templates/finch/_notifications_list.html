@@ -1,0 +1,30 @@
+{% load i18n %}
+{% for notification in notifications %}
+    {% if notification.event_type == "follow" %}
+        <a href="{% url 'profile' notification.actor.username %}" class="card mb-3 text-decoration-none notification-card {% if notification.is_unread %}border-primary{% endif %}" data-notification-id="{{ notification.id }}">
+    {% else %}
+        <a href="{% url 'finch_detail' notification.finch.id %}{% if notification.comment_id %}#comments{% endif %}" class="card mb-3 text-decoration-none notification-card {% if notification.is_unread %}border-primary{% endif %}" data-notification-id="{{ notification.id }}">
+    {% endif %}
+        <div class="card-body">
+            <div class="d-flex justify-content-between gap-3">
+                <div>
+                    {% if notification.event_type == "mention" %}
+                        {% blocktrans with username=notification.actor.username %}@{{ username }} mentioned you{% endblocktrans %}
+                    {% elif notification.event_type == "comment" %}
+                        {% blocktrans with username=notification.actor.username %}@{{ username }} commented on your post{% endblocktrans %}
+                    {% elif notification.event_type == "follow" %}
+                        {% blocktrans with username=notification.actor.username %}@{{ username }} followed you{% endblocktrans %}
+                    {% endif %}
+                </div>
+                {% if notification.is_unread %}
+                    <span class="badge text-bg-primary align-self-start">{% trans "New" %}</span>
+                {% endif %}
+            </div>
+            <div class="text-muted small mt-2">{{ notification.created_at|date:"d.m.Y H:i" }}</div>
+        </div>
+    </a>
+{% empty %}
+{% if not suppress_empty %}
+    <p class="text-muted notifications-empty">{% trans "No notifications yet." %}</p>
+{% endif %}
+{% endfor %}

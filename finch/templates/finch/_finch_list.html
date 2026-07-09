@@ -1,0 +1,50 @@
+{% load finch_markup i18n %}
+{% for finch in finches %}
+<div class="card mb-2 finch-card" data-finch-id="{{ finch.id }}">
+    <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">
+            <a href="{% url 'profile' finch.user.username %}" class="text-decoration-none text-muted">@{{ finch.user.username }}</a> ·
+            <a href="{% url 'finch_detail' finch.id %}" class="text-decoration-none text-muted"><small>{{finch.created_at|date:"d.m.Y H:i" }}</small></a>
+        </h6>
+        {% if finch.original %}
+            <div class="small text-muted mb-2">
+                {% trans "Repost from" %}
+                <a href="{% url 'profile' finch.original.user.username %}" class="text-decoration-none text-muted">@{{ finch.original.user.username }}</a>
+            </div>
+        {% endif %}
+        <div class="card-text finch-markup">{{ finch.text|finch_markup }}</div>
+        <div class="d-flex justify-content-between align-items-center gap-2 mt-3">
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-secondary icon-btn share-btn" data-url="{{ request.scheme }}://{{ request.get_host }}{% url 'finch_detail' finch.id %}" aria-label="{% trans 'Share' %}" title="{% trans 'Share' %}">
+                    <i class="bi bi-share" aria-hidden="true"></i>
+                    <span class="visually-hidden">{% trans "Share" %}</span>
+                </button>
+                <a href="{% url 'finch_detail' finch.id %}#comments" class="btn btn-sm btn-outline-secondary icon-btn metric-btn" aria-label="{% blocktrans count count=finch.comments_count|default:0 %}{{ count }} comment{% plural %}{{ count }} comments{% endblocktrans %}" title="{% trans 'Comments' %}">
+                    <i class="bi bi-chat" aria-hidden="true"></i>
+                    <span class="action-count">{{ finch.comments_count|default:0 }}</span>
+                    <span class="visually-hidden">{% trans "Comments" %}</span>
+                </a>
+                {% if user.is_authenticated and finch.user != user %}
+                    <form method="post" action="{% url 'repost_finch' finch.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-secondary icon-btn" aria-label="{% trans 'Repost' %}" title="{% trans 'Repost' %}">
+                            <i class="bi bi-repeat" aria-hidden="true"></i>
+                            <span class="visually-hidden">{% trans "Repost" %}</span>
+                        </button>
+                    </form>
+                    {% if finch.user.id not in followed_authors_ids %}
+                        <a href="{% url 'follow_user' finch.user.id %}" class="btn btn-sm btn-outline-primary">{% trans "Follow" %}</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+            <a href="{% url 'finch_detail' finch.id %}" class="small text-muted text-decoration-none">
+                {% blocktrans count count=finch.views_count %}{{ count }} view{% plural %}{{ count }} views{% endblocktrans %}
+            </a>
+        </div>
+    </div>
+</div>
+{% empty %}
+{% if not suppress_empty %}
+<p class="text-center text-muted">{% trans "No posts yet. Be first!" %}</p>
+{% endif %}
+{% endfor %}

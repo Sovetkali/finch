@@ -12,3 +12,4 @@ __pycache__/
 
 staticfiles/
 static_root/
+performance_guide.md

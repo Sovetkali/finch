@@ -1,0 +1,146 @@
+{% extends 'finch/base.html' %}
+{% load finch_markup i18n static %}
+
+{% block title %}{% blocktrans with username=finch.user.username %}Post by @{{ username }}{% endblocktrans %} - {% trans "Finch" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 600px;">
+    <div class="mb-3">
+        <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm">&larr; {% trans "Back home" %}</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">
+                <a href="{% url 'profile' finch.user.username %}" class="text-decoration-none text-muted">@{{ finch.user.username }}</a> ·
+                <small>{{ finch.created_at|date:"d.m.Y H:i" }}</small>
+            </h6>
+            {% if finch.original %}
+                <div class="small text-muted mb-2">
+                    {% trans "Repost from" %}
+                    <a href="{% url 'profile' finch.original.user.username %}" class="text-decoration-none text-muted">@{{ finch.original.user.username }}</a>
+                </div>
+            {% endif %}
+            <div class="card-text fs-5 my-3 finch-markup">{{ finch.text|finch_markup }}</div>
+            
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary icon-btn share-btn" data-url="{{ request.scheme }}://{{ request.get_host }}{% url 'finch_detail' finch.id %}" aria-label="{% trans 'Share' %}" title="{% trans 'Share' %}">
+                        <i class="bi bi-share" aria-hidden="true"></i>
+                        <span class="visually-hidden">{% trans "Share" %}</span>
+                    </button>
+                    
+                    {% if user.is_authenticated and finch.user != user %}
+                        <form method="post" action="{% url 'repost_finch' finch.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-secondary icon-btn ms-2" aria-label="{% trans 'Repost' %}" title="{% trans 'Repost' %}">
+                                <i class="bi bi-repeat" aria-hidden="true"></i>
+                                <span class="visually-hidden">{% trans "Repost" %}</span>
+                            </button>
+                        </form>
+                        {% if finch.user.id not in followed_authors_ids %}
+                            <a href="{% url 'follow_user' finch.user.id %}" class="btn btn-sm btn-outline-primary ms-2">{% trans "Follow" %}</a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <span class="small text-muted">
+                        {% blocktrans count count=finch.views_count %}{{ count }} view{% plural %}{{ count }} views{% endblocktrans %}
+                    </span>
+                    {% if user.is_authenticated and finch.user == user %}
+                        <a href="{% url 'delete_finch' finch.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('{% trans 'Are you sure you want to delete this post?' %}');">{% trans "Delete" %}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4" id="comments">
+        <div class="card-body">
+            <h5 class="card-title">{% trans "Comments" %}</h5>
+            {% if user.is_authenticated %}
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    <textarea name="text" class="form-control mb-2" rows="3" maxlength="280" required placeholder="{% trans 'Write a comment' %}"></textarea>
+                    <button type="submit" class="btn btn-primary btn-sm icon-btn" aria-label="{% trans 'Comment' %}" title="{% trans 'Comment' %}">
+                        <i class="bi bi-chat" aria-hidden="true"></i>
+                        <span class="visually-hidden">{% trans "Comment" %}</span>
+                    </button>
+                </form>
+            {% else %}
+                <p class="text-muted">
+                    <a href="{% url 'login' %}">{% trans "Log in" %}</a> {% trans "to comment." %}
+                </p>
+            {% endif %}
+
+            {% for comment in comments %}
+                <div class="border-top py-3">
+                    <div class="small text-muted mb-1">
+                        <a href="{% url 'profile' comment.user.username %}" class="text-decoration-none text-muted">@{{ comment.user.username }}</a> ·
+                        {{ comment.created_at|date:"d.m.Y H:i" }}
+                    </div>
+                    <p class="mb-0">{{ comment.text }}</p>
+                </div>
+            {% empty %}
+                <p class="text-muted mb-0">{% trans "No comments yet." %}</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.querySelectorAll('.share-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const url = this.getAttribute('data-url');
+            navigator.clipboard.writeText(url).then(() => {
+                const icon = this.querySelector('i');
+                const originalIcon = icon?.className;
+                const originalTitle = this.getAttribute('title');
+                if (icon) icon.className = 'bi bi-check2';
+                this.setAttribute('title', '{% trans "Link copied!" %}');
+                this.setAttribute('aria-label', '{% trans "Link copied!" %}');
+                this.classList.remove('btn-outline-secondary');
+                this.classList.add('btn-success');
+                setTimeout(() => {
+                    if (icon && originalIcon) icon.className = originalIcon;
+                    if (originalTitle) {
+                        this.setAttribute('title', originalTitle);
+                        this.setAttribute('aria-label', originalTitle);
+                    }
+                    this.classList.remove('btn-success');
+                    this.classList.add('btn-outline-secondary');
+                }, 2000);
+            }).catch(err => {
+                // Fallback for browsers that don't support Clipboard API or restrict it
+                const dummy = document.createElement('input');
+                document.body.appendChild(dummy);
+                dummy.value = url;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+                
+                const icon = this.querySelector('i');
+                const originalIcon = icon?.className;
+                const originalTitle = this.getAttribute('title');
+                if (icon) icon.className = 'bi bi-check2';
+                this.setAttribute('title', '{% trans "Link copied!" %}');
+                this.setAttribute('aria-label', '{% trans "Link copied!" %}');
+                this.classList.remove('btn-outline-secondary');
+                this.classList.add('btn-success');
+                setTimeout(() => {
+                    if (icon && originalIcon) icon.className = originalIcon;
+                    if (originalTitle) {
+                        this.setAttribute('title', originalTitle);
+                        this.setAttribute('aria-label', originalTitle);
+                    }
+                    this.classList.remove('btn-success');
+                    this.classList.add('btn-outline-secondary');
+                }, 2000);
+            });
+        });
+    });
+</script>
+{% endblock %}

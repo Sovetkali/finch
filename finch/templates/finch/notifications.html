@@ -1,0 +1,53 @@
+{% extends 'finch/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Notifications" %} - {% trans "Finch" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">{% trans "Notifications" %}</h2>
+    {% if unread_notifications_count %}
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary btn-sm">{% trans "Mark all as read" %}</button>
+        </form>
+    {% endif %}
+</div>
+
+<div id="notifications-list">
+    {% include "finch/_notifications_list.html" %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const notificationsList = document.getElementById('notifications-list');
+
+    function latestNotificationId() {
+        return Math.max(
+            0,
+            ...Array.from(document.querySelectorAll('[data-notification-id]'))
+                .map(item => Number(item.dataset.notificationId || 0))
+        );
+    }
+
+    async function loadNewNotifications() {
+        const params = new URLSearchParams({ after_id: latestNotificationId() });
+        const response = await fetch(`{% url 'notifications_updates' %}?${params.toString()}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (!response.ok) return;
+
+        const data = await response.json();
+        window.updateNotificationBadge?.(data.unread_count);
+        if (!data.html.trim()) return;
+
+        const fragment = document.createElement('div');
+        fragment.innerHTML = data.html;
+        notificationsList.querySelector('.notifications-empty')?.remove();
+        notificationsList.prepend(...fragment.childNodes);
+    }
+
+    setInterval(loadNewNotifications, 10000);
+</script>
+{% endblock %}

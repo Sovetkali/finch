@@ -1,0 +1,30 @@
+{% extends 'finch/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Delete confirmation" %} - {% trans "Finch" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 600px;">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">{% trans "Delete confirmation" %}</h5>
+        </div>
+        <div class="card-body">
+            <p class="lead">{% trans "Are you sure you want to delete this post?" %}</p>
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        @{{ finch.user.username }} · <small>{{ finch.created_at|date:"d.m.Y H:i" }}</small>
+                    </h6>
+                    <p class="card-text">{{ finch.text }}</p>
+                </div>
+            </div>
+            <form method="POST" action="{% url 'delete_finch' finch.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">{% trans "Yes, delete" %}</button>
+                <a href="{% url 'profile' finch.user.username %}" class="btn btn-outline-secondary ms-2">{% trans "Cancel" %}</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

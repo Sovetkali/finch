@@ -1,0 +1,201 @@
+{% extends 'finch/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Finch" %}{% endblock %}
+
+{% block extra_head %}
+{% if user.is_authenticated %}
+<style>
+    .compose-fab {
+        align-items: center;
+        border-radius: 999px;
+        bottom: 1.25rem;
+        box-shadow: 0 0.5rem 1.25rem rgba(13, 110, 253, 0.25);
+        display: inline-flex;
+        gap: 0.45rem;
+        justify-content: center;
+        min-height: 3rem;
+        padding: 0.75rem 1rem;
+        position: fixed;
+        right: max(1rem, calc((100vw - 600px) / 2 + 1rem));
+        z-index: 1030;
+    }
+
+    @media (max-width: 480px) {
+        .compose-fab {
+            bottom: 1rem;
+            right: 1rem;
+        }
+    }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if user.is_authenticated %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="POST" id="compose-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea class="form-control" id="compose-textarea" name="text" rows="3"
+                            placeholder="{% trans 'What is new? (max. 140 characters)' %}" maxlength="140" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary float-end">{% trans "Publish" %}</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="finch-feed" data-next-page="{{ next_page|default_if_none:'' }}">
+            {% include "finch/_finch_list.html" %}
+        </div>
+        <div id="feed-loader" class="text-center text-muted py-3 d-none">{% trans "Loading..." %}</div>
+        <div id="feed-sentinel" class="py-1"></div>
+        <button type="button" class="btn btn-primary compose-fab" id="compose-fab" aria-label="{% trans 'Write post' %}" title="{% trans 'Write post' %}">
+            <i class="bi bi-pencil-square" aria-hidden="true"></i>
+            <span>{% trans "Write" %}</span>
+        </button>
+    {% else %}
+        <div class="text-center mt-5 py-5">
+            <h1 class="display-5">{% trans "Welcome to Finch!" %} 🐦</h1>
+            <p class="lead text-muted">{% trans "The finch feed is available only to members." %}</p>
+            <div class="mt-4">
+                <a href="{% url 'login' %}" class="btn btn-primary btn-lg me-2">{% trans "Log in" %}</a>
+                <a href="{% url 'register' %}" class="btn btn-success btn-lg">{% trans "Sign up" %}</a>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const copiedText = "{% trans 'Link copied!' %}";
+    const textTooLong = "{% trans 'Text cannot exceed 140 characters.' %}";
+
+    function bindShareButtons(scope = document) {
+        scope.querySelectorAll('.share-btn:not([data-share-bound])').forEach(button => {
+            button.dataset.shareBound = 'true';
+            button.addEventListener('click', function() {
+                const url = this.getAttribute('data-url');
+                const setCopiedState = () => {
+                    const icon = this.querySelector('i');
+                    const originalIcon = icon?.className;
+                    const originalTitle = this.getAttribute('title');
+                    if (icon) icon.className = 'bi bi-check2';
+                    this.setAttribute('title', copiedText);
+                    this.setAttribute('aria-label', copiedText);
+                    this.classList.remove('btn-outline-secondary');
+                    this.classList.add('btn-success');
+                    setTimeout(() => {
+                        if (icon && originalIcon) icon.className = originalIcon;
+                        if (originalTitle) {
+                            this.setAttribute('title', originalTitle);
+                            this.setAttribute('aria-label', originalTitle);
+                        }
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-outline-secondary');
+                    }, 2000);
+                };
+
+                navigator.clipboard.writeText(url).then(setCopiedState).catch(() => {
+                    const dummy = document.createElement('input');
+                    document.body.appendChild(dummy);
+                    dummy.value = url;
+                    dummy.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(dummy);
+                    setCopiedState();
+                });
+            });
+        });
+    }
+
+    bindShareButtons();
+
+    const postForm = document.querySelector('form[method="POST"]');
+    if (postForm) {
+        postForm.addEventListener('submit', function(e) {
+            const textarea = this.querySelector('textarea[name="text"]');
+            if (textarea && textarea.value.length > 140) {
+                e.preventDefault();
+                alert(textTooLong);
+            }
+        });
+    }
+
+    const composeFab = document.getElementById('compose-fab');
+    const composeTextarea = document.getElementById('compose-textarea');
+    composeFab?.addEventListener('click', () => {
+        composeTextarea?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => composeTextarea?.focus(), 250);
+    });
+
+    const feed = document.getElementById('finch-feed');
+    const sentinel = document.getElementById('feed-sentinel');
+    const loader = document.getElementById('feed-loader');
+    let loading = false;
+
+    function latestFinchId() {
+        return Math.max(
+            0,
+            ...Array.from(document.querySelectorAll('[data-finch-id]'))
+                .map(item => Number(item.dataset.finchId || 0))
+        );
+    }
+
+    async function loadMoreFinches() {
+        const nextPage = feed?.dataset.nextPage;
+        if (!feed || !nextPage || loading) return;
+
+        loading = true;
+        loader.classList.remove('d-none');
+        const params = new URLSearchParams({ page: nextPage, format: 'json' });
+
+        try {
+            const response = await fetch(`/?${params.toString()}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!response.ok) throw new Error('Feed request failed');
+            const data = await response.json();
+            const fragment = document.createElement('div');
+            fragment.innerHTML = data.html;
+            bindShareButtons(fragment);
+            feed.append(...fragment.childNodes);
+            feed.dataset.nextPage = data.next_page || '';
+        } finally {
+            loading = false;
+            loader.classList.add('d-none');
+        }
+    }
+
+    if (sentinel && feed) {
+        const observer = new IntersectionObserver((entries) => {
+            if (entries.some(entry => entry.isIntersecting)) {
+                loadMoreFinches();
+            }
+        }, { rootMargin: '200px' });
+        observer.observe(sentinel);
+    }
+
+    async function loadNewFinches() {
+        if (!feed) return;
+
+        const params = new URLSearchParams({ format: 'json', after_id: latestFinchId() });
+        const response = await fetch(`/?${params.toString()}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (!data.html.trim()) return;
+
+        const fragment = document.createElement('div');
+        fragment.innerHTML = data.html;
+        bindShareButtons(fragment);
+        feed.querySelector('.text-center.text-muted')?.remove();
+        feed.prepend(...fragment.childNodes);
+    }
+
+    setInterval(loadNewFinches, 15000);
+</script>
+{% endblock %}

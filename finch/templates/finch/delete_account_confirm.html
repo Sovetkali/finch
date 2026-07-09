@@ -1,0 +1,28 @@
+{% extends 'finch/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Delete account confirmation" %} - {% trans "Finch" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 600px;">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">{% trans "Delete account" %}</h5>
+        </div>
+        <div class="card-body">
+            <p class="lead text-danger font-weight-bold">{% trans "Are you sure you want to delete your account?" %}</p>
+            <p class="text-muted">{% trans "This action cannot be undone. The following will be permanently deleted:" %}</p>
+            <ul>
+                <li>{% trans "Your profile and login data" %}</li>
+                <li>{% trans "All your posts" %}</li>
+                <li>{% trans "All your subscriptions" %}</li>
+            </ul>
+            <form method="POST" action="{% url 'delete_account' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">{% trans "Yes, permanently delete account" %}</button>
+                <a href="{% url 'profile' user.username %}" class="btn btn-outline-secondary ms-2">{% trans "Cancel" %}</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

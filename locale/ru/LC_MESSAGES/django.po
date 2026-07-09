@@ -1,0 +1,244 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Finch\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Finch"
+msgstr "Finch"
+
+msgid "Subscriptions"
+msgstr "Подписки"
+
+msgid "Notifications"
+msgstr "Уведомления"
+
+msgid "Log out"
+msgstr "Выйти"
+
+msgid "Log in"
+msgstr "Войти"
+
+msgid "Sign up"
+msgstr "Регистрация"
+
+msgid "Toggle dark theme"
+msgstr "Переключить темную тему"
+
+msgid "What is new? (max. 140 characters)"
+msgstr "Что у вас нового? (макс. 140 символов)"
+
+msgid "Publish"
+msgstr "Опубликовать"
+
+msgid "Write post"
+msgstr "Написать пост"
+
+msgid "Write"
+msgstr "Написать"
+
+msgid "Loading..."
+msgstr "Загружаем..."
+
+msgid "Welcome to Finch!"
+msgstr "Добро пожаловать в Finch!"
+
+msgid "The finch feed is available only to members."
+msgstr "Лента финчей доступна только участникам сети."
+
+msgid "Link copied!"
+msgstr "Ссылка скопирована!"
+
+msgid "Text cannot exceed 140 characters."
+msgstr "Текст не может превышать 140 символов."
+
+msgid "Share"
+msgstr "Поделиться"
+
+msgid "Follow"
+msgstr "Подписаться"
+
+msgid "Unfollow"
+msgstr "Отписаться"
+
+msgid "No posts yet. Be first!"
+msgstr "Записей пока нет. Будьте первым!"
+
+msgid "%(username)s's profile"
+msgstr "Профиль %(username)s"
+
+msgid "Share profile"
+msgstr "Поделиться профилем"
+
+msgid "Delete account"
+msgstr "Удалить аккаунт"
+
+msgid "Are you sure you want to delete this post?"
+msgstr "Вы уверены, что хотите удалить этот пост?"
+
+msgid "Delete"
+msgstr "Удалить"
+
+msgid "No posts yet."
+msgstr "Постов пока нет."
+
+msgid "Post by @%(username)s"
+msgstr "Пост от @%(username)s"
+
+msgid "Back home"
+msgstr "Назад на главную"
+
+msgid "Delete confirmation"
+msgstr "Подтверждение удаления"
+
+msgid "Yes, delete"
+msgstr "Да, удалить"
+
+msgid "Cancel"
+msgstr "Отмена"
+
+msgid "Delete account confirmation"
+msgstr "Подтверждение удаления аккаунта"
+
+msgid "Are you sure you want to delete your account?"
+msgstr "Вы уверены, что хотите удалить свой аккаунт?"
+
+msgid "This action cannot be undone. The following will be permanently deleted:"
+msgstr "Это действие необратимо. Будут безвозвратно удалены:"
+
+msgid "Your profile and login data"
+msgstr "Ваш профиль и данные для входа"
+
+msgid "All your posts"
+msgstr "Все ваши записи"
+
+msgid "All your subscriptions"
+msgstr "Все ваши подписки"
+
+msgid "Yes, permanently delete account"
+msgstr "Да, удалить аккаунт навсегда"
+
+msgid "My subscriptions"
+msgstr "Мои подписки"
+
+msgid "Following"
+msgstr "Кого читаю"
+
+msgid "Followers"
+msgstr "Кто читает меня"
+
+msgid "Subscribed"
+msgstr "Подписан"
+
+msgid "Following you since"
+msgstr "Читает вас с"
+
+msgid "Mutual"
+msgstr "Взаимно"
+
+msgid "Nobody follows you yet."
+msgstr "Вас пока никто не читает."
+
+msgid "You are not subscribed to anyone yet."
+msgstr "Вы пока ни на кого не подписаны."
+
+msgid "Friend search is not available yet. We are working on it."
+msgstr "Поиск друзей пока недоступен. Мы работаем над ним."
+
+msgid "Mark all as read"
+msgstr "Отметить всё как прочитанное"
+
+msgid "@%(username)s mentioned you"
+msgstr "@%(username)s упомянул(а) вас"
+
+msgid "@%(username)s commented on your post"
+msgstr "@%(username)s оставил(а) комментарий к вашей записи"
+
+msgid "@%(username)s followed you"
+msgstr "@%(username)s подписался(-ась) на вас"
+
+msgid "New"
+msgstr "Новое"
+
+msgid "No notifications yet."
+msgstr "Уведомлений пока нет."
+
+msgid "Welcome"
+msgstr "Добро пожаловать"
+
+msgid "Share your link with friends so they can subscribe to your content."
+msgstr "Поделитесь своей ссылкой с друзьями, чтобы они могли подписаться на ваш контент."
+
+msgid "Copy link"
+msgstr "Скопировать ссылку"
+
+msgid "Go to feed"
+msgstr "Перейти к ленте"
+
+msgid "Link copied to clipboard"
+msgstr "Ссылка скопирована в буфер обмена"
+
+msgid "Email"
+msgstr "Почта"
+
+msgid "A user with this username already exists."
+msgstr "Пользователь с таким именем уже существует."
+
+msgid "A user with this email already exists."
+msgstr "Пользователь с такой почтой уже существует."
+
+msgid "Only authenticated users can post."
+msgstr "Только авторизованные пользователи могут публиковать."
+
+msgid "Check your email: we sent an activation link."
+msgstr "Проверьте почту: мы отправили ссылку для подтверждения регистрации."
+
+msgid "Confirm your Finch registration"
+msgstr "Подтверждение регистрации в Finch"
+
+msgid "Email confirmed. Welcome to Finch!"
+msgstr "Почта подтверждена. Добро пожаловать в Finch!"
+
+msgid "Email is already confirmed. Welcome back!"
+msgstr "Почта уже подтверждена. С возвращением!"
+
+msgid "The activation link is invalid or expired."
+msgstr "Ссылка подтверждения недействительна или устарела."
+
+msgid "Welcome back"
+msgstr "С возвращением"
+
+msgid "Close"
+msgstr "Закрыть"
+
+msgid "Invalid username or password."
+msgstr "Неверное имя пользователя или пароль."
+
+msgid "Forgot password?"
+msgstr "Забыли пароль?"
+
+msgid "No account?"
+msgstr "Нет аккаунта?"
+
+msgid "Create your unique account"
+msgstr "Создайте свой уникальный аккаунт"
+
+msgid "Create account"
+msgstr "Создать аккаунт"
+
+msgid "Already have an account?"
+msgstr "Уже есть аккаунт?"
+
+msgid "Menu"
+msgstr "Меню"
+
+msgid "Toggle theme"
+msgstr "Переключить тему"
+
+msgid "Light theme"
+msgstr "Светлая тема"
+
+msgid "Dark theme"
+msgstr "Темная тема"

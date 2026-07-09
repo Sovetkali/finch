@@ -1,0 +1,160 @@
+{% extends 'finch/base.html' %}
+{% load finch_markup i18n static %}
+
+{% block title %}{% blocktrans with username=profile_user.username %}{{ username }}'s profile{% endblocktrans %} - {% trans "Finch" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 600px;">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="mb-0">@{{ profile_user.username }}</h2>
+    <button class="btn btn-outline-secondary btn-sm icon-btn share-btn" data-url="{{ request.scheme }}://{{ request.get_host }}{% url 'profile' profile_user.username %}" aria-label="{% trans 'Share profile' %}" title="{% trans 'Share profile' %}">
+      <i class="bi bi-share" aria-hidden="true"></i>
+      <span class="visually-hidden">{% trans "Share profile" %}</span>
+    </button>
+  </div>
+  {% if user.is_authenticated and user != profile_user %}
+    {% if is_following %}
+      <a href="{% url 'follow_user' profile_user.id %}" class="btn btn-outline-danger mb-3">{% trans "Unfollow" %}</a>
+    {% else %}
+      <a href="{% url 'follow_user' profile_user.id %}" class="btn btn-outline-primary mb-3">{% trans "Follow" %}</a>
+    {% endif %}
+  {% elif user.is_authenticated and user == profile_user %}
+    <a href="{% url 'delete_account' %}" class="btn btn-outline-danger mb-3">{% trans "Delete account" %}</a>
+  {% endif %}
+
+  <ul class="nav nav-tabs mb-3" id="profileTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts" type="button" role="tab" aria-controls="posts" aria-selected="true">{% trans "Posts" %}</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" type="button" role="tab" aria-controls="comments" aria-selected="false">{% trans "Comments" %}</button>
+    </li>
+  </ul>
+
+  <div class="tab-content" id="profileTabsContent">
+    <div class="tab-pane fade show active" id="posts" role="tabpanel" aria-labelledby="posts-tab" tabindex="0">
+      {% for finch in finches %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">
+              <a href="{% url 'finch_detail' finch.id %}" class="text-decoration-none text-muted">{{ finch.created_at|date:"d.m.Y H:i" }}</a>
+            </h6>
+            {% if finch.original %}
+              <div class="small text-muted mb-2">
+                {% trans "Repost from" %}
+                <a href="{% url 'profile' finch.original.user.username %}" class="text-decoration-none text-muted">@{{ finch.original.user.username }}</a>
+              </div>
+            {% endif %}
+            <div class="card-text finch-markup">{{ finch.text|finch_markup }}</div>
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-secondary icon-btn share-btn" data-url="{{ request.scheme }}://{{ request.get_host }}{% url 'finch_detail' finch.id %}" aria-label="{% trans 'Share' %}" title="{% trans 'Share' %}">
+                  <i class="bi bi-share" aria-hidden="true"></i>
+                  <span class="visually-hidden">{% trans "Share" %}</span>
+                </button>
+                <a href="{% url 'finch_detail' finch.id %}#comments" class="btn btn-sm btn-outline-secondary icon-btn metric-btn" aria-label="{% blocktrans count count=finch.comments_count|default:0 %}{{ count }} comment{% plural %}{{ count }} comments{% endblocktrans %}" title="{% trans 'Comments' %}">
+                  <i class="bi bi-chat" aria-hidden="true"></i>
+                  <span class="action-count">{{ finch.comments_count|default:0 }}</span>
+                  <span class="visually-hidden">{% trans "Comments" %}</span>
+                </a>
+                {% if user.is_authenticated and finch.user != user %}
+                  <form method="post" action="{% url 'repost_finch' finch.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-secondary icon-btn" aria-label="{% trans 'Repost' %}" title="{% trans 'Repost' %}">
+                      <i class="bi bi-repeat" aria-hidden="true"></i>
+                      <span class="visually-hidden">{% trans "Repost" %}</span>
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+              <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'finch_detail' finch.id %}" class="small text-muted text-decoration-none">
+                  {% blocktrans count count=finch.views_count %}{{ count }} view{% plural %}{{ count }} views{% endblocktrans %}
+                </a>
+                {% if user.is_authenticated and finch.user == user %}
+                  <a href="{% url 'delete_finch' finch.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('{% trans 'Are you sure you want to delete this post?' %}');">{% trans "Delete" %}</a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-muted">{% trans "No posts yet." %}</p>
+      {% endfor %}
+    </div>
+
+    <div class="tab-pane fade" id="comments" role="tabpanel" aria-labelledby="comments-tab" tabindex="0">
+      {% for comment in comments %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <h6 class="card-subtitle mb-2 text-muted">
+              <a href="{% url 'finch_detail' comment.finch.id %}" class="text-decoration-none text-muted">
+                {% blocktrans with username=comment.finch.user.username %}Comment on @{{ username }}'s post{% endblocktrans %}
+              </a>
+              · {{ comment.created_at|date:"d.m.Y H:i" }}
+            </h6>
+            <p class="card-text mb-2">{{ comment.text }}</p>
+            <p class="small text-muted mb-0">{{ comment.finch.text }}</p>
+          </div>
+        </div>
+      {% empty %}
+        <p class="text-muted">{% trans "No comments yet." %}</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.querySelectorAll('.share-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const url = this.getAttribute('data-url');
+            navigator.clipboard.writeText(url).then(() => {
+                const icon = this.querySelector('i');
+                const originalIcon = icon?.className;
+                const originalTitle = this.getAttribute('title');
+                if (icon) icon.className = 'bi bi-check2';
+                this.setAttribute('title', '{% trans "Link copied!" %}');
+                this.setAttribute('aria-label', '{% trans "Link copied!" %}');
+                this.classList.remove('btn-outline-secondary');
+                this.classList.add('btn-success');
+                setTimeout(() => {
+                    if (icon && originalIcon) icon.className = originalIcon;
+                    if (originalTitle) {
+                        this.setAttribute('title', originalTitle);
+                        this.setAttribute('aria-label', originalTitle);
+                    }
+                    this.classList.remove('btn-success');
+                    this.classList.add('btn-outline-secondary');
+                }, 2000);
+            }).catch(err => {
+                const dummy = document.createElement('input');
+                document.body.appendChild(dummy);
+                dummy.value = url;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+                
+                const icon = this.querySelector('i');
+                const originalIcon = icon?.className;
+                const originalTitle = this.getAttribute('title');
+                if (icon) icon.className = 'bi bi-check2';
+                this.setAttribute('title', '{% trans "Link copied!" %}');
+                this.setAttribute('aria-label', '{% trans "Link copied!" %}');
+                this.classList.remove('btn-outline-secondary');
+                this.classList.add('btn-success');
+                setTimeout(() => {
+                    if (icon && originalIcon) icon.className = originalIcon;
+                    if (originalTitle) {
+                        this.setAttribute('title', originalTitle);
+                        this.setAttribute('aria-label', originalTitle);
+                    }
+                    this.classList.remove('btn-success');
+                    this.classList.add('btn-outline-secondary');
+                }, 2000);
+            });
+        });
+    });
+</script>
+{% endblock %}

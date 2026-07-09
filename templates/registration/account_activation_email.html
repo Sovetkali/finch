@@ -1,0 +1,10 @@
+Hello, {{ user.username }}!
+
+You have registered for Finch.
+
+Confirm your Finch registration using this link:
+{{ protocol }}://{{ domain }}{% url 'activate_account' uidb64=uid token=token %}
+
+This link is valid for 3 days. If you do not confirm your email during that time, your account will remain inactive and the link will expire.
+
+If you did not register for Finch, you can safely ignore this email.
