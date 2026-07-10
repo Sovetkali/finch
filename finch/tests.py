@@ -31,7 +31,7 @@ class RegistrationTest(TestCase):
         })
         self.assertFalse(form.is_valid())
         self.assertIn('username', form.errors)
-        self.assertEqual(form.errors['username'][0], "A user with this username already exists.")
+        self.assertEqual(form.errors['username'][0], "Пользователь с таким именем уже существует.")
 
     def test_form_validation_success(self):
         # Test form validity for a new unique username
@@ -52,7 +52,7 @@ class RegistrationTest(TestCase):
             'password2': 'SuperSecurePassword99',
         })
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "A user with this username already exists.")
+        self.assertContains(response, "Пользователь с таким именем уже существует.")
 
     def test_registration_view_success(self):
         # Test post to registration view with unique username
@@ -266,7 +266,7 @@ class FinchPostTests(TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["count"], 1)
-        self.assertIn("followed you", data["html"])
+        self.assertIn("подписался на вас", data["html"])
 
     def test_feed_shows_comment_count(self):
         from finch.models import Comment
@@ -398,14 +398,13 @@ class FeedPaginationTests(TestCase):
         }
     )
     def test_ping_endpoint_is_throttled(self):
-        cache.clear()
         self.client.login(username="reader", password="password123")
 
         first = self.client.get(reverse("ping"))
         second = self.client.get(reverse("ping"))
 
         self.assertEqual(first.status_code, 200)
-        self.assertEqual(second.status_code, 200)
+        self.assertEqual(second.status_code, 429)
 
 
 class SubscriptionsAndAccountDeletionTests(TestCase):
@@ -447,7 +446,7 @@ class SubscriptionsAndAccountDeletionTests(TestCase):
         response = self.client.get(reverse('subscriptions_list'))
 
         self.assertContains(response, "@follower")
-        self.assertContains(response, "Mutual")
+        self.assertContains(response, "Взаимно")
 
     def test_subscriptions_empty_shows_search_unavailable_message(self):
         from finch.models import Subscription
@@ -456,8 +455,8 @@ class SubscriptionsAndAccountDeletionTests(TestCase):
 
         response = self.client.get(reverse('subscriptions_list'))
 
-        self.assertContains(response, "Friend search is not available yet. We are working on it.")
-        self.assertNotContains(response, "Find someone to follow")
+        self.assertContains(response, "Поиск друзей пока недоступен. Мы работаем над этим.")
+        self.assertNotContains(response, "Найти кого почитать")
 
     def test_unsubscribe_and_redirect_back(self):
         self.client.login(username="testuser", password="password123")
@@ -498,7 +497,7 @@ class SubscriptionsAndAccountDeletionTests(TestCase):
         self.client.login(username="testuser", password="password123")
         response = self.client.get(reverse('delete_account'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Are you sure you want to delete your account?")
+        self.assertContains(response, "Вы уверены, что хотите удалить свой аккаунт?")
 
     def test_delete_account_post_deletes_user(self):
         self.client.login(username="testuser", password="password123")
