@@ -45,8 +45,13 @@ $MANAGE check --deploy
 
 if command -v systemctl >/dev/null 2>&1; then
   echo "==> Restarting service"
-  systemctl restart "$SERVICE_NAME"
-  systemctl --no-pager --full status "$SERVICE_NAME" || true
+  if command -v sudo >/dev/null 2>&1; then
+    sudo systemctl restart "$SERVICE_NAME"
+    sudo systemctl --no-pager --full status "$SERVICE_NAME" || true
+  else
+    echo "Warning: sudo is not available, skipping service restart." >&2
+    echo "Run manually if needed: sudo systemctl restart $SERVICE_NAME" >&2
+  fi
 else
   echo "==> systemctl not available, skipping service restart"
 fi
