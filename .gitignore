@@ -18,6 +18,7 @@ __pycache__/
 .coverage
 .coverage.*
 htmlcov/
+reports/
 
 .DS_Store
 celerybeat-schedule*
