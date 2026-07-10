@@ -13,6 +13,11 @@
 - `finch-workflow release-pr`
 - `.venv/bin/python scripts/create_release_pr.py --commit --title "..." --body "..."`
 
+## Tooling publish
+
+- `publish-tooling`
+- Run tests before committing or opening the PR.
+
 ## Notes
 
 - Local development uses SQLite when `DATABASE_URL` is not set.
