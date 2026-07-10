@@ -82,7 +82,7 @@ def working_tree_files() -> list[str]:
     for line in output.splitlines():
         if not line.strip():
             continue
-        path = line[3:].strip()
+        path = line[4:].strip()
         if " -> " in path:
             path = path.split(" -> ", 1)[1]
         files.append(path)
