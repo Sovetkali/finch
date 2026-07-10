@@ -12,6 +12,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from finch.forms import UserRegisterForm
 from finch.templatetags.finch_markup import finch_markup
+from finch.models import PlatformEvent
 
 
 class RegistrationTest(TestCase):
@@ -231,6 +232,26 @@ class FinchPostTests(TestCase):
         self.assertIsNotNone(notification.read_at)
         cache.delete(f"unread_notifications_count:{self.user1.id}")
 
+    def test_profile_share_event_is_recorded(self):
+        self.client.login(username="user1", password="password1")
+        response = self.client.post(
+            reverse("record_profile_share"),
+            {"target_username": self.user2.username, "path": f"/profile/{self.user2.username}/"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            PlatformEvent.objects.filter(
+                event_type=PlatformEvent.PROFILE_SHARE,
+                user=self.user1,
+                target_user=self.user2,
+            ).exists()
+        )
+
+    def test_platform_stats_requires_staff(self):
+        self.client.login(username="user1", password="password1")
+        response = self.client.get(reverse("platform_stats"))
+        self.assertEqual(response.status_code, 403)
+
     def test_notifications_status_returns_unread_count(self):
         from finch.models import Notification
         Notification.objects.create(
@@ -380,6 +401,7 @@ class FeedPaginationTests(TestCase):
             finch=post,
         )
         self.client.login(username="reader", password="password123")
+        cache.delete(f"unread_notifications_count:{self.user.id}")
 
         response = self.client.get(reverse("index"))
         self.assertContains(response, 'data-notification-badge')

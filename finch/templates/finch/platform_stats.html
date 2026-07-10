@@ -1,0 +1,149 @@
+{% extends 'finch/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Platform stats" %} - Finch{% endblock %}
+
+{% block content %}
+<div class="container my-5" style="max-width: 960px;">
+  <h1 class="mb-4">{% trans "Platform stats" %}</h1>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">{% trans "Registered users" %}</div><div class="fs-3 fw-bold">{{ registered_users }}</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">{% trans "New today" %}</div><div class="fs-3 fw-bold">{{ users_today }}</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">{% trans "New this week" %}</div><div class="fs-3 fw-bold">{{ users_week }}</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">{% trans "New this month" %}</div><div class="fs-3 fw-bold">{{ users_month }}</div></div></div></div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted small">{% trans "Avg posts / day" %}</div><div class="fs-3 fw-bold">{{ avg_posts_day }}</div></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted small">{% trans "Avg posts / week" %}</div><div class="fs-3 fw-bold">{{ avg_posts_week }}</div></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted small">{% trans "Avg posts / month" %}</div><div class="fs-3 fw-bold">{{ avg_posts_month }}</div></div></div></div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="text-muted small">{% trans "Profile link copies" %}</div>
+      <div class="fs-3 fw-bold">{{ profile_share_clicks }}</div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h4 mb-3">{% trans "Assign staff access" %}</h2>
+      <form method="post" class="row g-2 align-items-end">
+        {% csrf_token %}
+        <div class="col-md-5">
+          <label class="form-label" for="staff-username">{% trans "Username" %}</label>
+          <input type="text" class="form-control" id="staff-username" name="username" placeholder="@username">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="staff-is-staff">{% trans "Staff access" %}</label>
+          <select class="form-select" id="staff-is-staff" name="is_staff">
+            <option value="1">{% trans "Grant" %}</option>
+            <option value="0">{% trans "Revoke" %}</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-primary w-100">{% trans "Save" %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <h2 class="h4 mb-3">{% trans "Recent logins" %}</h2>
+      <div class="list-group">
+        {% for event in recent_logins %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>@{{ event.user.username }}</div>
+            <small class="text-muted">{{ event.created_at|date:"d.m.Y H:i" }}</small>
+          </div>
+        {% empty %}
+          <div class="list-group-item text-muted">{% trans "No logins yet." %}</div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <h2 class="h4 mb-3">{% trans "Recent profile shares" %}</h2>
+      <div class="list-group">
+        {% for event in recent_shares %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              @{{ event.user.username }}
+              {% if event.target_user %}→ @{{ event.target_user.username }}{% endif %}
+            </div>
+            <small class="text-muted">{{ event.created_at|date:"d.m.Y H:i" }}</small>
+          </div>
+        {% empty %}
+          <div class="list-group-item text-muted">{% trans "No shares yet." %}</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-4">
+    <div class="card-body">
+      <h2 class="h4 mb-3">{% trans "Registered users" %}</h2>
+      <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-md-8">
+          <label class="form-label" for="user-search">{% trans "Search by username" %}</label>
+          <input type="search" class="form-control" id="user-search" name="q" value="{{ users_search_query }}" placeholder="@username">
+        </div>
+        <div class="col-md-4">
+          <button type="submit" class="btn btn-outline-primary w-100">{% trans "Search" %}</button>
+        </div>
+      </form>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>{% trans "Username" %}</th>
+              <th>{% trans "Staff" %}</th>
+              <th>{% trans "Last login" %}</th>
+              <th>{% trans "Joined" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in registered_users_list %}
+              <tr>
+                <td>@{{ item.username }}</td>
+                <td>{% if item.is_staff %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                <td>{% if item.last_login %}{{ item.last_login|date:"d.m.Y H:i" }}{% else %}-{% endif %}</td>
+                <td>{{ item.date_joined|date:"d.m.Y H:i" }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="text-muted">{% trans "No users yet." %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if users_page_obj.paginator.num_pages > 1 %}
+        <nav aria-label="{% trans 'Users pagination' %}">
+          <ul class="pagination justify-content-center mt-3 mb-0">
+            {% if users_page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?q={{ users_search_query|urlencode }}&page={{ users_page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">{% trans "Previous" %}</span></li>
+            {% endif %}
+            <li class="page-item active" aria-current="page">
+              <span class="page-link">{{ users_page_obj.number }} / {{ users_page_obj.paginator.num_pages }}</span>
+            </li>
+            {% if users_page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?q={{ users_search_query|urlencode }}&page={{ users_page_obj.next_page_number }}">{% trans "Next" %}</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">{% trans "Next" %}</span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

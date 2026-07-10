@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from asgiref.sync import sync_to_async
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -6,6 +8,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 from django.core.cache import cache
+from django.core.paginator import Paginator
 from django.db.models import Count, F
 from django.http import JsonResponse
 from django.shortcuts import aget_object_or_404, redirect, render
@@ -16,10 +19,12 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_POST
 
 from .forms import UserRegisterForm
 from .context_processors import unread_notifications_cache_key
-from .models import Comment, Finch, FinchView, Notification, Subscription
+from .models import Comment, Finch, FinchView, Notification, PlatformEvent, Subscription
 from .tasks import build_activation_message, send_activation_email_task
 from .templatetags.finch_markup import MENTION_RE
 
@@ -70,6 +75,30 @@ async def create_follow_notification(actor, recipient):
         event_type=Notification.FOLLOW,
     )
     cache.delete(unread_notifications_cache_key(recipient.id))
+
+
+@require_POST
+async def record_profile_share(request):
+    user = await request.auser()
+    if not user.is_authenticated:
+        return JsonResponse({"detail": "Authentication required."}, status=403)
+
+    target_username = request.POST.get("target_username", "").strip()
+    path = request.POST.get("path", "").strip()
+    target_user = None
+    if target_username:
+        try:
+            target_user = await User.objects.aget(username=target_username)
+        except User.DoesNotExist:
+            target_user = None
+
+    await PlatformEvent.objects.acreate(
+        event_type=PlatformEvent.PROFILE_SHARE,
+        user=user,
+        target_user=target_user,
+        path=path,
+    )
+    return JsonResponse({"ok": True})
 
 
 def visible_finches_for_user(user, followed_authors_ids):
@@ -309,6 +338,7 @@ async def delete_account(request):
 
 
 @login_required
+@ensure_csrf_cookie
 async def profile(request, username):
     """Display another user's finches page.
 
@@ -464,3 +494,68 @@ async def notifications_updates(request):
         "count": len(new_notifications),
         "unread_count": unread_count,
     })
+
+
+def build_platform_stats_context(search_query="", page_number=1):
+    today = timezone.now().date()
+    now = timezone.now()
+    users_qs = User.objects.all()
+    if search_query:
+        users_qs = users_qs.filter(username__icontains=search_query)
+    posts_qs = Finch.objects.all()
+    shares_qs = PlatformEvent.objects.filter(event_type=PlatformEvent.PROFILE_SHARE)
+    logins_qs = PlatformEvent.objects.filter(event_type=PlatformEvent.LOGIN)
+    paginator = Paginator(
+        users_qs.order_by("-date_joined").values("id", "username", "is_staff", "last_login", "date_joined"),
+        20,
+    )
+    page_obj = paginator.get_page(page_number)
+
+    def avg_per_day(days):
+        start = now - timedelta(days=days)
+        return round(posts_qs.filter(created_at__gte=start).count() / max(days, 1), 2)
+
+    return {
+        "registered_users": users_qs.count(),
+        "registered_users_list": list(page_obj.object_list),
+        "users_page_obj": page_obj,
+        "users_search_query": search_query,
+        "users_today": users_qs.filter(date_joined__date=today).count(),
+        "users_week": users_qs.filter(date_joined__gte=now - timedelta(days=7)).count(),
+        "users_month": users_qs.filter(date_joined__gte=now - timedelta(days=30)).count(),
+        "avg_posts_day": avg_per_day(1),
+        "avg_posts_week": avg_per_day(7),
+        "avg_posts_month": avg_per_day(30),
+        "profile_share_clicks": shares_qs.count(),
+        "recent_logins": list(logins_qs.select_related("user")[:20]),
+        "recent_shares": list(shares_qs.select_related("user", "target_user")[:20]),
+    }
+
+
+@login_required
+async def platform_stats(request):
+    user = await request.auser()
+    if not user.is_staff:
+        return JsonResponse({"detail": "Forbidden."}, status=403)
+
+    if request.method == "POST":
+        post_data = await sync_to_async(request.POST.dict, thread_sensitive=True)()
+        username = (post_data.get("username") or "").strip()
+        is_staff_value = post_data.get("is_staff") in {"1", "true", "on", "yes"}
+        if username:
+            try:
+                target_user = await User.objects.aget(username=username)
+                target_user.is_staff = is_staff_value
+                await target_user.asave(update_fields=["is_staff"])
+                messages.success(request, _("Staff access updated for @%(username)s.") % {"username": username})
+            except User.DoesNotExist:
+                messages.error(request, _("User @%(username)s was not found.") % {"username": username})
+        return redirect("platform_stats")
+
+    search_query = request.GET.get("q", "").strip()
+    try:
+        page_number = int(request.GET.get("page", "1") or 1)
+    except ValueError:
+        page_number = 1
+    context = await sync_to_async(build_platform_stats_context, thread_sensitive=True)(search_query, page_number)
+    return await render_async(request, "finch/platform_stats.html", context)
