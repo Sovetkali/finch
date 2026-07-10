@@ -168,7 +168,7 @@
                 <a href="{% url 'notifications_list' %}" class="btn btn-outline-light btn-sm me-2 icon-btn notification-btn" aria-label="{% trans 'Notifications' %}" title="{% trans 'Notifications' %}" data-notification-link>
                     <i class="bi bi-bell" aria-hidden="true"></i>
                     {% if unread_notifications_count %}
-                        <span class="badge text-bg-danger notification-dot" data-notification-badge>{{ unread_notifications_count }}</span>
+                        <span class="badge text-bg-danger notification-dot notification-badge" data-notification-badge>{{ unread_notifications_count }}</span>
                     {% endif %}
                 </a>
                 <a href="{% url 'subscriptions_list' %}" class="btn btn-outline-light btn-sm me-2 icon-btn" aria-label="{% trans 'Subscriptions' %}" title="{% trans 'Subscriptions' %}">
@@ -198,7 +198,7 @@
             <button class="btn btn-outline-light btn-sm nav-menu-notification-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{% trans 'Menu' %}" title="{% trans 'Menu' %}" data-notification-link data-notification-target="menu">
                 ☰
                 {% if unread_notifications_count %}
-                    <span class="badge text-bg-danger nav-menu-notification-dot" data-notification-badge data-notification-target="menu">{{ unread_notifications_count }}</span>
+                    <span class="badge text-bg-danger nav-menu-notification-dot notification-badge" data-notification-badge data-notification-target="menu">{{ unread_notifications_count }}</span>
                 {% endif %}
             </button>
             <div class="dropdown-menu dropdown-menu-end">
@@ -207,7 +207,7 @@
                     <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'notifications_list' %}" data-notification-link>
                         {% trans "Notifications" %}
                         {% if unread_notifications_count %}
-                            <span class="badge text-bg-danger" data-notification-badge>{{ unread_notifications_count }}</span>
+                            <span class="badge text-bg-danger notification-badge" data-notification-badge>{{ unread_notifications_count }}</span>
                         {% endif %}
                     </a>
                     <a class="dropdown-item" href="{% url 'subscriptions_list' %}">{% trans "Subscriptions" %}</a>
@@ -281,7 +281,7 @@
 
     window.updateNotificationBadge = function(count) {
         const safeCount = Number(count || 0);
-        document.querySelectorAll('[data-notification-badge]').forEach(badge => {
+        document.querySelectorAll('.notification-badge').forEach(badge => {
             badge.remove();
         });
         if (!safeCount) return;
@@ -296,10 +296,10 @@
             } else {
                 badge.className = 'badge text-bg-danger';
             }
-            badge.dataset.notificationBadge = '';
             if (target) {
                 badge.dataset.notificationTarget = target;
             }
+            badge.classList.add('notification-badge');
             badge.textContent = safeCount;
             link.appendChild(badge);
         });

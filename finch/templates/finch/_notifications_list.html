@@ -9,11 +9,11 @@
             <div class="d-flex justify-content-between gap-3">
                 <div>
                     {% if notification.event_type == "mention" %}
-                        {% blocktrans with username=notification.actor.username %}@{{ username }} mentioned you{% endblocktrans %}
+                        {% blocktrans with username=notification.actor.username %}@{{ username }} упомянул вас{% endblocktrans %}
                     {% elif notification.event_type == "comment" %}
-                        {% blocktrans with username=notification.actor.username %}@{{ username }} commented on your post{% endblocktrans %}
+                        {% blocktrans with username=notification.actor.username %}@{{ username }} прокомментировал ваш пост{% endblocktrans %}
                     {% elif notification.event_type == "follow" %}
-                        {% blocktrans with username=notification.actor.username %}@{{ username }} followed you{% endblocktrans %}
+                        {% blocktrans with username=notification.actor.username %}@{{ username }} подписался на вас{% endblocktrans %}
                     {% endif %}
                 </div>
                 {% if notification.is_unread %}

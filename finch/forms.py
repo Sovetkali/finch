@@ -17,14 +17,14 @@ class UserRegisterForm(UserCreationForm):
         fields = ("username", "email")
         error_messages = {
             'username': {
-                'unique': _("A user with this username already exists."),
+                'unique': _("Пользователь с таким именем уже существует."),
             },
         }
 
     def clean_email(self):
         email = self.cleaned_data["email"].lower()
         if User.objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError(_("A user with this email already exists."))
+            raise forms.ValidationError(_("Пользователь с таким email уже существует."))
         return email
 
     def __init__(self, *args, **kwargs):

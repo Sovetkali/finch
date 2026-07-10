@@ -19,7 +19,7 @@ from django.utils.translation import gettext as _
 
 from .forms import UserRegisterForm
 from .context_processors import unread_notifications_cache_key
-from .models import Comment, Finch, Notification, Subscription
+from .models import Comment, Finch, FinchView, Notification, Subscription
 from .tasks import build_activation_message, send_activation_email_task
 from .templatetags.finch_markup import MENTION_RE
 
@@ -355,7 +355,16 @@ async def finch_detail(request, finch_id):
                 await create_mention_notifications(text, user, finch, comment)
         return redirect("finch_detail", finch_id=finch_id)
 
-    await Finch.objects.filter(id=finch_id).aupdate(views_count=F("views_count") + 1)
+    if user.is_authenticated:
+        viewer_id = f"user:{user.id}"
+    else:
+        if not request.session.session_key:
+            await sync_to_async(request.session.create, thread_sensitive=True)()
+        viewer_id = f"session:{request.session.session_key}"
+
+    _, created = await FinchView.objects.aget_or_create(finch_id=finch_id, viewer_id=viewer_id)
+    if created:
+        await Finch.objects.filter(id=finch_id).aupdate(views_count=F("views_count") + 1)
     finch = await aget_object_or_404(Finch.objects.select_related("user", "original", "original__user"), id=finch_id)
     comments = await sync_to_async(list)(
         Comment.objects.filter(finch=finch).select_related("user").order_by("-created_at")

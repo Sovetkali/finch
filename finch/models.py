@@ -29,6 +29,20 @@ class Finch(models.Model):
         return f"{self.user.username}: {self.text[:20]}..."
 
 
+class FinchView(models.Model):
+    finch = models.ForeignKey(Finch, on_delete=models.CASCADE, related_name="views")
+    viewer_id = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["finch", "viewer_id"], name="unique_finch_viewer_view"),
+        ]
+
+    def __str__(self):
+        return f"{self.finch_id}:{self.viewer_id}"
+
+
 class Comment(models.Model):
     finch = models.ForeignKey(Finch, on_delete=models.CASCADE, related_name="comments")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")

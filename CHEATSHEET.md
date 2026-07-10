@@ -12,6 +12,14 @@
 - `release-pr`
 - `finch-workflow release-pr`
 - `.venv/bin/python scripts/create_release_pr.py --commit --title "..." --body "..."`
+- Responses and progress updates for this skill are in Russian.
+- If you run it from `main`, it should stash current changes and create a release branch automatically.
+- The release script prints the branch name and PR URL.
+
+## Tooling publish
+
+- `publish-tooling`
+- Run tests before committing or opening the PR.
 
 ## Notes
 

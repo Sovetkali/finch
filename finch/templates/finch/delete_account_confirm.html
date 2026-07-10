@@ -10,16 +10,16 @@
             <h5 class="mb-0">{% trans "Delete account" %}</h5>
         </div>
         <div class="card-body">
-            <p class="lead text-danger font-weight-bold">{% trans "Are you sure you want to delete your account?" %}</p>
-            <p class="text-muted">{% trans "This action cannot be undone. The following will be permanently deleted:" %}</p>
+            <p class="lead text-danger font-weight-bold">{% trans "Вы уверены, что хотите удалить свой аккаунт?" %}</p>
+            <p class="text-muted">{% trans "Это действие нельзя отменить. Будут удалены:" %}</p>
             <ul>
-                <li>{% trans "Your profile and login data" %}</li>
-                <li>{% trans "All your posts" %}</li>
-                <li>{% trans "All your subscriptions" %}</li>
+                <li>{% trans "Ваш профиль и данные для входа" %}</li>
+                <li>{% trans "Все ваши посты" %}</li>
+                <li>{% trans "Все ваши подписки" %}</li>
             </ul>
             <form method="POST" action="{% url 'delete_account' %}">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-danger">{% trans "Yes, permanently delete account" %}</button>
+                <button type="submit" class="btn btn-danger">{% trans "Да, удалить аккаунт навсегда" %}</button>
                 <a href="{% url 'profile' user.username %}" class="btn btn-outline-secondary ms-2">{% trans "Cancel" %}</a>
             </form>
         </div>
