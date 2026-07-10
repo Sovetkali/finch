@@ -16,6 +16,11 @@
 - If you run it from `main`, it should stash current changes and create a release branch automatically.
 - The release script prints the branch name and PR URL.
 
+## Tooling publish
+
+- `publish-tooling`
+- Run tests before committing or opening the PR.
+
 ## Notes
 
 - Local development uses SQLite when `DATABASE_URL` is not set.
