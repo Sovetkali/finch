@@ -15,6 +15,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import subprocess
 import sys
 from pathlib import Path
@@ -65,9 +66,26 @@ def current_branch() -> str:
     return git("rev-parse", "--abbrev-ref", "HEAD")
 
 
+def current_head() -> str:
+    return git("rev-parse", "--short", "HEAD")
+
+
 def changed_files() -> list[str]:
     output = git("diff", "--name-only", f"{MAIN_BRANCH}...HEAD")
     files = [line.strip() for line in output.splitlines() if line.strip()]
+    return files
+
+
+def working_tree_files() -> list[str]:
+    output = git("status", "--short")
+    files: list[str] = []
+    for line in output.splitlines():
+        if not line.strip():
+            continue
+        path = line[3:].strip()
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        files.append(path)
     return files
 
 
@@ -110,6 +128,16 @@ def create_commit(branch: str, title: str) -> None:
     print(f"Committed production changes on {branch}.")
 
 
+def auto_commit_working_tree(branch: str, title: str) -> None:
+    files = working_tree_files()
+    validate_files(files)
+    if not files:
+        return
+    git("add", *files)
+    git("commit", "-m", title)
+    print(f"Committed working tree changes on {branch}.")
+
+
 def create_pr(title: str, body: str) -> str:
     cmd = [
         "gh",
@@ -126,6 +154,32 @@ def create_pr(title: str, body: str) -> str:
     ]
     result = run(cmd)
     return result.stdout.strip()
+
+
+def github_compare_url(branch: str) -> str:
+    remote_url = git("remote", "get-url", "origin")
+    if remote_url.endswith(".git"):
+        remote_url = remote_url[:-4]
+    if remote_url.startswith("git@github.com:"):
+        remote_url = "https://github.com/" + remote_url.removeprefix("git@github.com:")
+    if remote_url.startswith("https://github.com/"):
+        return f"{remote_url}/compare/{MAIN_BRANCH}...{branch}"
+    return f"Compare {MAIN_BRANCH}...{branch} on your remote: {remote_url}"
+
+
+def create_release_branch_from_main() -> str:
+    timestamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    branch_name = f"codex/release-{timestamp}"
+    git("stash", "push", "-u", "-m", f"release-pr auto-stash {timestamp}")
+    git("checkout", "-b", branch_name, MAIN_BRANCH)
+    try:
+        git("stash", "pop")
+    except subprocess.CalledProcessError as exc:
+        raise SystemExit(
+            "Created a release branch, but restoring stashed changes failed.\n"
+            "Resolve the conflict manually, then rerun the release script."
+        ) from exc
+    return branch_name
 
 
 def main() -> int:
@@ -147,16 +201,26 @@ def main() -> int:
 
     branch = current_branch()
     if branch == MAIN_BRANCH:
-        raise SystemExit("Create or checkout a feature branch before opening a PR.")
+        branch = create_release_branch_from_main()
+        print(f"Created release branch: {branch}")
 
-    if args.commit:
-        create_commit(branch, args.title)
+    if args.commit or working_tree_files():
+        auto_commit_working_tree(branch, args.title)
 
-    pr_url = create_pr(args.title, args.body)
-    if pr_url:
-        print(pr_url)
-    else:
-        print("PR created.")
+    try:
+        pr_url = create_pr(args.title, args.body)
+        if pr_url:
+            print(f"Branch: {branch}")
+            print(pr_url)
+        else:
+            print(f"Branch: {branch}")
+            print("PR created.")
+    except subprocess.CalledProcessError as exc:
+        print(f"Branch: {branch}")
+        print("Automatic PR creation failed.")
+        if exc.stderr:
+            print(exc.stderr.strip())
+        print(github_compare_url(branch))
     return 0
 
 

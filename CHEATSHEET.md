@@ -12,6 +12,7 @@
 - `release-pr`
 - `finch-workflow release-pr`
 - `.venv/bin/python scripts/create_release_pr.py --commit --title "..." --body "..."`
+- Responses and progress updates for this skill are in Russian.
 
 ## Notes
 
