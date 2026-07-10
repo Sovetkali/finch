@@ -1,4 +1,5 @@
 .env
+.env.local.backup
 .venv
 .python-version
 
@@ -9,6 +10,18 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.mo
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+.DS_Store
+celerybeat-schedule*
+media/
 
 staticfiles/
 static_root/
