@@ -107,7 +107,7 @@ def create_commit(branch: str, title: str) -> None:
     validate_files(files)
     git("add", *files)
     git("commit", "-m", title)
-    print(f"Committed production changes on {branch}.")
+    print(f"Committed production changes on branch: {branch}")
 
 
 def create_pr(title: str, body: str) -> str:
@@ -154,8 +154,10 @@ def main() -> int:
 
     pr_url = create_pr(args.title, args.body)
     if pr_url:
+        print(f"Branch: {branch}")
         print(pr_url)
     else:
+        print(f"Branch: {branch}")
         print("PR created.")
     return 0
 
