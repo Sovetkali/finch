@@ -40,8 +40,8 @@
         </div>
       {% empty %}
         <div class="text-center mt-5 py-4">
-          <p class="text-muted">{% trans "You are not subscribed to anyone yet." %}</p>
-          <p class="text-muted">{% trans "Friend search is not available yet. We are working on it." %}</p>
+          <p class="text-muted">{% trans "Вы пока ни на кого не подписаны." %}</p>
+          <p class="text-muted">{% trans "Поиск друзей пока недоступен. Мы работаем над этим." %}</p>
         </div>
       {% endfor %}
     </div>
@@ -59,7 +59,7 @@
               </div>
             </div>
             {% if follower.user.id in following_ids %}
-              <span class="badge text-bg-light border flex-shrink-0">{% trans "Mutual" %}</span>
+              <span class="badge text-bg-light border flex-shrink-0">{% trans "Взаимно" %}</span>
             {% else %}
               <a href="{% url 'follow_user' follower.user.id %}" class="btn btn-outline-primary btn-sm flex-shrink-0">{% trans "Follow" %}</a>
             {% endif %}

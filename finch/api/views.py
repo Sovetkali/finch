@@ -1,12 +1,20 @@
+from django.core.cache import cache
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework import status
 
 class PingView(APIView):
     """Simple endpoint to test DRF throttling."""
     permission_classes = [AllowAny]
 
     def get(self, request, format=None):
+        user_id = getattr(request.user, "id", None)
+        cache_key = f"ping-throttle:{user_id or request.META.get('REMOTE_ADDR', 'anonymous')}"
+        if cache.get(cache_key):
+            return Response({"detail": "Request was throttled."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        cache.set(cache_key, True, timeout=60)
         return Response({"message": "pong"})
 from asgiref.sync import sync_to_async
 from django.core.cache import cache
