@@ -98,3 +98,34 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.actor.username} -> {self.recipient.username}: {self.event_type}"
+
+
+class PlatformEvent(models.Model):
+    LOGIN = "login"
+    PROFILE_SHARE = "profile_share"
+    EVENT_CHOICES = (
+        (LOGIN, "Login"),
+        (PROFILE_SHARE, "Profile share"),
+    )
+
+    event_type = models.CharField(max_length=32, choices=EVENT_CHOICES)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="platform_events")
+    target_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="profile_share_events",
+        blank=True,
+        null=True,
+    )
+    path = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["event_type", "-created_at"], name="plat_evt_type_created_idx"),
+            models.Index(fields=["user", "-created_at"], name="plat_evt_user_created_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.event_type}: {self.user.username}"

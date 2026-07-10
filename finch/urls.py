@@ -17,6 +17,8 @@ urlpatterns = [
     path('notifications/', views.notifications_list, name='notifications_list'),
     path('notifications/status/', views.notifications_status, name='notifications_status'),
     path('notifications/updates/', views.notifications_updates, name='notifications_updates'),
+    path('platform-stats/', views.platform_stats, name='platform_stats'),
+    path('api/profile-share/', views.record_profile_share, name='record_profile_share'),
     path('onboarding/', views.onboarding, name='onboarding'),
     path('api/', include('finch.api.urls')),
     path('health/', health.health_check, name='health_check'),
