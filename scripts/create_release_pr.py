@@ -125,7 +125,7 @@ def create_commit(branch: str, title: str) -> None:
     validate_files(files)
     git("add", *files)
     git("commit", "-m", title)
-    print(f"Committed production changes on {branch}.")
+    print(f"Committed production changes on branch: {branch}")
 
 
 def auto_commit_working_tree(branch: str, title: str) -> None:
