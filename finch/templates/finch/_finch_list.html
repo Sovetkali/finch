@@ -4,7 +4,17 @@
     <div class="card-body">
         <h6 class="card-subtitle mb-2 text-muted">
             <a href="{% url 'profile' finch.user.username %}" class="text-decoration-none text-muted">@{{ finch.user.username }}</a> ·
-            <a href="{% url 'finch_detail' finch.id %}" class="text-decoration-none text-muted"><small>{{finch.created_at|date:"d.m.Y H:i" }}</small></a>
+            <a href="{% url 'finch_detail' finch.id %}" class="text-decoration-none text-muted">
+                <small>
+                    <time
+                        class="js-post-time"
+                        data-post-time="{{ finch.created_at|date:'c' }}"
+                        datetime="{{ finch.created_at|date:'c' }}"
+                    >
+                        {{ finch.created_at|date:"d.m.Y H:i" }}
+                    </time>
+                </small>
+            </a>
         </h6>
         {% if finch.original %}
             <div class="small text-muted mb-2">

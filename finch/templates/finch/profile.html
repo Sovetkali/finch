@@ -37,7 +37,15 @@
         <div class="card mb-3">
           <div class="card-body">
             <h6 class="card-subtitle mb-2 text-muted">
-              <a href="{% url 'finch_detail' finch.id %}" class="text-decoration-none text-muted">{{ finch.created_at|date:"d.m.Y H:i" }}</a>
+              <a href="{% url 'finch_detail' finch.id %}" class="text-decoration-none text-muted">
+                <time
+                  class="js-post-time"
+                  data-post-time="{{ finch.created_at|date:'c' }}"
+                  datetime="{{ finch.created_at|date:'c' }}"
+                >
+                  {{ finch.created_at|date:"d.m.Y H:i" }}
+                </time>
+              </a>
             </h6>
             {% if finch.original %}
               <div class="small text-muted mb-2">
@@ -91,7 +99,13 @@
               <a href="{% url 'finch_detail' comment.finch.id %}" class="text-decoration-none text-muted">
                 {% blocktrans with username=comment.finch.user.username %}Comment on @{{ username }}'s post{% endblocktrans %}
               </a>
-              · {{ comment.created_at|date:"d.m.Y H:i" }}
+              · <time
+                  class="js-post-time"
+                  data-post-time="{{ comment.created_at|date:'c' }}"
+                  datetime="{{ comment.created_at|date:'c' }}"
+                >
+                  {{ comment.created_at|date:"d.m.Y H:i" }}
+                </time>
             </h6>
             <p class="card-text mb-2">{{ comment.text }}</p>
             <p class="small text-muted mb-0">{{ comment.finch.text }}</p>
@@ -107,6 +121,41 @@
 
 {% block extra_scripts %}
 <script>
+    function formatLocalTimes(scope = document) {
+        scope.querySelectorAll('[data-post-time]').forEach((node) => {
+            const isoValue = node.getAttribute('datetime') || node.dataset.postTime;
+            if (!isoValue) return;
+            const date = new Date(isoValue);
+            if (Number.isNaN(date.getTime())) return;
+            const exact = new Intl.DateTimeFormat(undefined, {
+                dateStyle: 'short',
+                timeStyle: 'short',
+            }).format(date);
+            const diffSeconds = Math.round((date.getTime() - Date.now()) / 1000);
+            const absSeconds = Math.abs(diffSeconds);
+            const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+            const units = [
+                ['year', 60 * 60 * 24 * 365],
+                ['month', 60 * 60 * 24 * 30],
+                ['day', 60 * 60 * 24],
+                ['hour', 60 * 60],
+                ['minute', 60],
+                ['second', 1],
+            ];
+            let text = exact;
+            for (const [unit, size] of units) {
+                if (absSeconds >= size || unit === 'second') {
+                    text = rtf.format(Math.round(diffSeconds / size), unit);
+                    break;
+                }
+            }
+            node.textContent = text;
+            node.setAttribute('title', exact);
+        });
+    }
+
+    formatLocalTimes();
+
     function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
