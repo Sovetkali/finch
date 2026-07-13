@@ -21,6 +21,12 @@ class UserRegisterForm(UserCreationForm):
             },
         }
 
+    def clean_username(self):
+        username = self.cleaned_data["username"]
+        if User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError(_("Пользователь с таким именем уже существует."))
+        return username
+
     def clean_email(self):
         email = self.cleaned_data["email"].lower()
         if User.objects.filter(email__iexact=email).exists():

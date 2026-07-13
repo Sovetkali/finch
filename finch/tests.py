@@ -34,6 +34,39 @@ class RegistrationTest(TestCase):
         self.assertIn('username', form.errors)
         self.assertEqual(form.errors['username'][0], "Пользователь с таким именем уже существует.")
 
+    def test_form_validation_duplicate_username_is_case_insensitive(self):
+        form = UserRegisterForm(data={
+            'username': self.username.upper(),
+            'email': 'duplicate-case@example.com',
+            'password1': 'SuperSecurePassword99',
+            'password2': 'SuperSecurePassword99',
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['username'][0], "Пользователь с таким именем уже существует.")
+
+    def test_login_is_case_insensitive(self):
+        logged_in = self.client.login(
+            username=self.username.upper(),
+            password=self.password,
+        )
+
+        self.assertTrue(logged_in)
+
+    def test_exact_login_still_works_for_existing_case_only_duplicates(self):
+        duplicate = User.objects.create_user(
+            username=self.username.upper(),
+            password="AnotherSecr3tP@ssw0rd!",
+        )
+
+        logged_in = self.client.login(
+            username=duplicate.username,
+            password="AnotherSecr3tP@ssw0rd!",
+        )
+
+        self.assertTrue(logged_in)
+        self.assertEqual(int(self.client.session['_auth_user_id']), duplicate.pk)
+
     def test_form_validation_success(self):
         # Test form validity for a new unique username
         form = UserRegisterForm(data={
