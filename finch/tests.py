@@ -147,6 +147,20 @@ class FinchPostTests(TestCase):
         self.post1.refresh_from_db()
         self.assertEqual(self.post1.views_count, 1)
 
+    def test_index_renders_compose_counter_and_local_time_marker(self):
+        self.client.login(username="user1", password="password1")
+        from finch.models import Finch, Subscription
+        Subscription.objects.create(user=self.user1, author=self.user2)
+        Finch.objects.create(user=self.user2, text="Time marker post")
+
+        response = self.client.get(reverse("index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="compose-counter"')
+        self.assertContains(response, 'maxlength="140"')
+        self.assertContains(response, 'data-post-time=')
+        self.assertContains(response, 'id="compose-fab"')
+
     def test_finch_detail_counts_unique_authenticated_users(self):
         self.client.login(username="user2", password="password2")
 

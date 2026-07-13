@@ -21,6 +21,10 @@
         z-index: 1030;
     }
 
+    .compose-meta {
+        min-height: 1.25rem;
+    }
+
     @media (max-width: 480px) {
         .compose-fab {
             bottom: 1rem;
@@ -40,6 +44,9 @@
                     <div class="mb-3">
                         <textarea class="form-control" id="compose-textarea" name="text" rows="3"
                             placeholder="{% trans 'What is new? (max. 140 characters)' %}" maxlength="140" required></textarea>
+                        <div class="d-flex justify-content-end mt-1 compose-meta">
+                            <small id="compose-counter" class="text-muted" aria-live="polite"></small>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary float-end">{% trans "Publish" %}</button>
                 </form>
@@ -71,6 +78,7 @@
 <script>
     const copiedText = "{% trans 'Link copied!' %}";
     const textTooLong = "{% trans 'Text cannot exceed 140 characters.' %}";
+    const composeLimit = 140;
 
     function bindShareButtons(scope = document) {
         scope.querySelectorAll('.share-btn:not([data-share-bound])').forEach(button => {
@@ -113,18 +121,46 @@
     bindShareButtons();
 
     const postForm = document.querySelector('form[method="POST"]');
+    const composeTextarea = document.getElementById('compose-textarea');
+    const composeCounter = document.getElementById('compose-counter');
+    const composeFab = document.getElementById('compose-fab');
     if (postForm) {
         postForm.addEventListener('submit', function(e) {
             const textarea = this.querySelector('textarea[name="text"]');
-            if (textarea && textarea.value.length > 140) {
+            if (textarea && textarea.value.length > composeLimit) {
                 e.preventDefault();
                 alert(textTooLong);
             }
         });
     }
 
-    const composeFab = document.getElementById('compose-fab');
-    const composeTextarea = document.getElementById('compose-textarea');
+    function updateComposeCounter() {
+        if (!composeTextarea || !composeCounter) return;
+        const remaining = Math.max(composeLimit - composeTextarea.value.length, 0);
+        composeCounter.textContent = `Осталось ${remaining} символов`;
+        composeCounter.classList.toggle('text-danger', remaining <= 20);
+    }
+
+    function updateComposeFabVisibility() {
+        if (!composeFab) return;
+        const doc = document.documentElement;
+        const composeRect = composeTextarea?.getBoundingClientRect();
+        const composeVisible = Boolean(
+            composeRect &&
+            composeRect.bottom > 0 &&
+            composeRect.top < window.innerHeight
+        );
+        const pageScrollable = doc.scrollHeight > window.innerHeight + 8;
+        composeFab.classList.toggle('d-none', composeVisible && !pageScrollable);
+    }
+
+    updateComposeCounter();
+    updateComposeFabVisibility();
+
+    composeTextarea?.addEventListener('input', updateComposeCounter);
+    window.addEventListener('resize', updateComposeFabVisibility);
+    window.addEventListener('scroll', updateComposeFabVisibility, { passive: true });
+
     composeFab?.addEventListener('click', () => {
         composeTextarea?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         setTimeout(() => composeTextarea?.focus(), 250);
@@ -160,8 +196,10 @@
             const fragment = document.createElement('div');
             fragment.innerHTML = data.html;
             bindShareButtons(fragment);
+            formatLocalTimes(fragment);
             feed.append(...fragment.childNodes);
             feed.dataset.nextPage = data.next_page || '';
+            updateComposeFabVisibility();
         } finally {
             loading = false;
             loader.classList.add('d-none');
@@ -192,10 +230,47 @@
         const fragment = document.createElement('div');
         fragment.innerHTML = data.html;
         bindShareButtons(fragment);
+        formatLocalTimes(fragment);
         feed.querySelector('.text-center.text-muted')?.remove();
         feed.prepend(...fragment.childNodes);
+        updateComposeFabVisibility();
     }
 
     setInterval(loadNewFinches, 15000);
+
+    function formatLocalTimes(scope = document) {
+        scope.querySelectorAll('[data-post-time]').forEach((node) => {
+            const isoValue = node.getAttribute('datetime') || node.dataset.postTime;
+            if (!isoValue) return;
+            const date = new Date(isoValue);
+            if (Number.isNaN(date.getTime())) return;
+            const exact = new Intl.DateTimeFormat(undefined, {
+                dateStyle: 'short',
+                timeStyle: 'short',
+            }).format(date);
+            const diffSeconds = Math.round((date.getTime() - Date.now()) / 1000);
+            const absSeconds = Math.abs(diffSeconds);
+            const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+            const units = [
+                ['year', 60 * 60 * 24 * 365],
+                ['month', 60 * 60 * 24 * 30],
+                ['day', 60 * 60 * 24],
+                ['hour', 60 * 60],
+                ['minute', 60],
+                ['second', 1],
+            ];
+            let text = exact;
+            for (const [unit, size] of units) {
+                if (absSeconds >= size || unit === 'second') {
+                    text = rtf.format(Math.round(diffSeconds / size), unit);
+                    break;
+                }
+            }
+            node.textContent = text;
+            node.setAttribute('title', exact);
+        });
+    }
+
+    formatLocalTimes();
 </script>
 {% endblock %}

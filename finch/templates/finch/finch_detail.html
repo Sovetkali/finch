@@ -13,7 +13,15 @@
         <div class="card-body">
             <h6 class="card-subtitle mb-2 text-muted">
                 <a href="{% url 'profile' finch.user.username %}" class="text-decoration-none text-muted">@{{ finch.user.username }}</a> ·
-                <small>{{ finch.created_at|date:"d.m.Y H:i" }}</small>
+                <small>
+                    <time
+                        class="js-post-time"
+                        data-post-time="{{ finch.created_at|date:'c' }}"
+                        datetime="{{ finch.created_at|date:'c' }}"
+                    >
+                        {{ finch.created_at|date:"d.m.Y H:i" }}
+                    </time>
+                </small>
             </h6>
             {% if finch.original %}
                 <div class="small text-muted mb-2">
@@ -78,7 +86,13 @@
                 <div class="border-top py-3">
                     <div class="small text-muted mb-1">
                         <a href="{% url 'profile' comment.user.username %}" class="text-decoration-none text-muted">@{{ comment.user.username }}</a> ·
-                        {{ comment.created_at|date:"d.m.Y H:i" }}
+                        <time
+                            class="js-post-time"
+                            data-post-time="{{ comment.created_at|date:'c' }}"
+                            datetime="{{ comment.created_at|date:'c' }}"
+                        >
+                            {{ comment.created_at|date:"d.m.Y H:i" }}
+                        </time>
                     </div>
                     <p class="mb-0">{{ comment.text }}</p>
                 </div>
@@ -92,6 +106,41 @@
 
 {% block extra_scripts %}
 <script>
+    function formatLocalTimes(scope = document) {
+        scope.querySelectorAll('[data-post-time]').forEach((node) => {
+            const isoValue = node.getAttribute('datetime') || node.dataset.postTime;
+            if (!isoValue) return;
+            const date = new Date(isoValue);
+            if (Number.isNaN(date.getTime())) return;
+            const exact = new Intl.DateTimeFormat(undefined, {
+                dateStyle: 'short',
+                timeStyle: 'short',
+            }).format(date);
+            const diffSeconds = Math.round((date.getTime() - Date.now()) / 1000);
+            const absSeconds = Math.abs(diffSeconds);
+            const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+            const units = [
+                ['year', 60 * 60 * 24 * 365],
+                ['month', 60 * 60 * 24 * 30],
+                ['day', 60 * 60 * 24],
+                ['hour', 60 * 60],
+                ['minute', 60],
+                ['second', 1],
+            ];
+            let text = exact;
+            for (const [unit, size] of units) {
+                if (absSeconds >= size || unit === 'second') {
+                    text = rtf.format(Math.round(diffSeconds / size), unit);
+                    break;
+                }
+            }
+            node.textContent = text;
+            node.setAttribute('title', exact);
+        });
+    }
+
+    formatLocalTimes();
+
     document.querySelectorAll('.share-btn').forEach(button => {
         button.addEventListener('click', function() {
             const url = this.getAttribute('data-url');
